@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - bagetter-db-container
+    healthcheck:
+      test: pg_isready --quiet --dbname=$${POSTGRES_DB} --username=$${POSTGRES_USER} || exit 1
+      start_period: 60s
+      start_interval: 3s
+      timeout: 5s
+      interval: 300s
+      retries: 3
+    volumes:
+      - ./volumes/bagetter/db:/var/lib/postgresql/data
+    environment:
+      - PGDATA=/var/lib/postgresql/data/bagetter-data
+      - POSTGRES_USER=bagetter_user
+      - POSTGRES_PASSWORD=bagetter_secret
+      - POSTGRES_DB=bagetter_store
+
+  app:
+    image: toras9000/bagetter-mp:1.4.1
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      default:
+      frontend:
+        aliases:
+          - bagetter-app-container
+    healthcheck:
+      test: curl -f http://localhost:8080 || exit 1
+      start_period: 60s
+      start_interval: 3s
+      timeout: 5s
+      interval: 300s
+      retries: 3
+    volumes:
+      - ./volumes/bagetter/app/data:/data
+      - ./volumes/bagetter/app/keys:/root/.aspnet/DataProtection-Keys
+    environment:
+      - TZ=Asia/Tokyo
+      - ApiKey=MY-API-KEY
+      - Storage__Type=FileSystem
+      - Storage__Path=/data
+      - Database__Type=PostgreSql
+      - Database__ConnectionString=Host=bagetter-db-container;Port=5432;Database=bagetter_store;User ID=bagetter_user;Password=bagetter_secret;
+      - Search__Type=Database
+
+  proxy:
+    image: nginx:1.26
+    restart: unless-stopped
+    command: sh -c "exec find /work/certs/ca -type f -print0 | xargs -0 chmod 444 && exec nginx -g 'daemon off;'"
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      frontend:
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./assets/configs/server:/etc/nginx/conf.d:ro
+      - ./assets/certs:/work/certs
+
+networks:
+  frontend:

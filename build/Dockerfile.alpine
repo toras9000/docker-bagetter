@@ -1,0 +1,37 @@
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine as builder
+
+RUN apk add git
+
+WORKDIR /work
+
+ARG BAGETTER_TAG=xxxxxxxxxx
+RUN git clone https://github.com/bagetter/BaGetter.git --depth 1 -b "${BAGETTER_TAG}"
+
+ARG TARGETARCH
+ARG BAGETTER_VER=xxxxxxxxxx
+RUN dotnet publish ./BaGetter/src/BaGetter \
+    --output /app \
+    -c Release \
+    -a $TARGETARCH \
+    -p Version=${BAGETTER_VER} \
+    -p DebugType=none \
+    -p DebugSymbols=false \
+    -p GenerateDocumentationFile=false \
+    -p UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine-composite
+
+RUN apk add --no-cache icu-libs icu-data-full tzdata
+
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+ENV Storage__Path "/data"
+ENV Search__Type "Database"
+ENV Database__Type "Sqlite"
+ENV Database__ConnectionString "Data Source=/data/db/bagetter.db"
+
+WORKDIR /app
+COPY --from=builder  /app            /app
+
+EXPOSE 8080
+
+CMD ["dotnet", "/app/BaGetter.dll"]

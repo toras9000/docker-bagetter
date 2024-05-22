@@ -1,0 +1,58 @@
+From 23cf5affa6513931496d67f56f653eb3106c2411 Mon Sep 17 00:00:00 2001
+From: toras9000 <toras9000@example.com>
+Date: Thu, 23 May 2024 01:37:07 +0900
+Subject: [PATCH] Advanced search query
+
+---
+ .../Search/DatabaseSearchService.cs           | 35 ++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/src/BaGetter.Core/Search/DatabaseSearchService.cs b/src/BaGetter.Core/Search/DatabaseSearchService.cs
+index d07e5ce..7923efc 100644
+--- a/src/BaGetter.Core/Search/DatabaseSearchService.cs
++++ b/src/BaGetter.Core/Search/DatabaseSearchService.cs
+@@ -152,7 +152,40 @@ private static IQueryable<Package> ApplySearchQuery(IQueryable<Package> query, s
+ 
+         search = search.ToLowerInvariant();
+ 
+-        return query.Where(p => p.Id.ToLower().Contains(search));
++        var conditions = search.Split(' ');
++        foreach (var cond in conditions)
++        {
++            if (cond.Length <= 0) continue;
++            var keys = cond.Split(':');
++            var filter = (keys.Length == 2) ? (prop: keys[0], kwd: keys[1]) : (prop: null, kwd: keys[0]);
++            switch (filter.prop)
++            {
++                case "version":
++                case "owner":
++                case "author":
++                case "tags":
++                    // not supoprted
++                    break;
++                case "packageid":
++                    query = query.Where(p => p.Id.ToLower() == filter.kwd);
++                    break;
++                case "title":
++                    query = query.Where(p => p.Title.ToLower().Contains(filter.kwd));
++                    break;
++                case "summary":
++                    query = query.Where(p => p.Summary.ToLower().Contains(filter.kwd));
++                    break;
++                case "description":
++                    query = query.Where(p => p.Description.ToLower().Contains(filter.kwd));
++                    break;
++                case "id":
++                default:
++                    query = query.Where(p => p.Id.ToLower().Contains(filter.kwd));
++                    break;
++            }
++        }
++
++        return query;
+     }
+ 
+     private static IQueryable<Package> ApplySearchFilters(
+-- 
+2.42.0.windows.2
+

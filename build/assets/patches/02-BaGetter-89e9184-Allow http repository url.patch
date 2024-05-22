@@ -1,0 +1,25 @@
+From 89e9184c944749eff123b1bf38e73766c31cc0c6 Mon Sep 17 00:00:00 2001
+From: toras9000 <toras9000@example.com>
+Date: Thu, 23 May 2024 01:36:55 +0900
+Subject: [PATCH] Allow http repository url
+
+---
+ src/BaGetter.Core/Extensions/PackageArchiveReaderExtensions.cs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/BaGetter.Core/Extensions/PackageArchiveReaderExtensions.cs b/src/BaGetter.Core/Extensions/PackageArchiveReaderExtensions.cs
+index 1291003..4cbd848 100644
+--- a/src/BaGetter.Core/Extensions/PackageArchiveReaderExtensions.cs
++++ b/src/BaGetter.Core/Extensions/PackageArchiveReaderExtensions.cs
+@@ -159,7 +159,7 @@ private static (Uri repositoryUrl, string repositoryType) GetRepositoryMetadata(
+             return (null, null);
+         }
+ 
+-        if (repositoryUri.Scheme != Uri.UriSchemeHttps)
++        if (repositoryUri.Scheme != Uri.UriSchemeHttps && repositoryUri.Scheme != Uri.UriSchemeHttp)
+         {
+             return (null, null);
+         }
+-- 
+2.42.0.windows.2
+

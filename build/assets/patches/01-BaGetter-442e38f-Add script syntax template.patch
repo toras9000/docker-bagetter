@@ -1,0 +1,28 @@
+From 442e38f5c4c5e87ee53106fddb3817453a32e6d9 Mon Sep 17 00:00:00 2001
+From: toras9000 <toras9000@example.com>
+Date: Thu, 23 May 2024 01:36:41 +0900
+Subject: [PATCH] Add script syntax template
+
+---
+ src/BaGetter.Web/Pages/Package.cshtml | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/BaGetter.Web/Pages/Package.cshtml b/src/BaGetter.Web/Pages/Package.cshtml
+index 61988b6..5f05df4 100644
+--- a/src/BaGetter.Web/Pages/Package.cshtml
++++ b/src/BaGetter.Web/Pages/Package.cshtml
+@@ -326,6 +326,11 @@ else
+                     name: "Package Manager",
+                     prefix: "PM>",
+                     content: ["Install-Package @Model.Package.Id -Version @Model.Package.NormalizedVersionString"]
++                },
++                {
++                    name: "Script & Interactive",
++                    prefix: ">",
++                    content: ["#r \"nuget: @Model.Package.Id, @Model.Package.NormalizedVersionString\""]
+                 }
+                 </text>
+             }
+-- 
+2.42.0.windows.2
+
